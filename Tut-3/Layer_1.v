@@ -9,9 +9,10 @@ module Layer_1 #(parameter NN = 30,numWeight=784,dataWidth=16,layerNum=1,sigmoid
     input [31:0]    config_layer_num,
     input [31:0]    config_neuron_num,
     input           x_valid,
-    input [dataWidth-1:0]    x_in,
-    output [NN-1:0]     o_valid,
-    output [NN*dataWidth-1:0]  x_out
+    input [dataWidth-1:0]    x_in, //all the neurons get the same input(fully connected network)
+    output [NN-1:0]     o_valid, //all output valid into a single bus.
+    output [NN*dataWidth-1:0]  x_out //Flatening all the outputs of all neurons into a single bus. because in verilog a two dimentional array is infered as a memory.
+	
     );
 neuron #(.numWeight(numWeight),.layerNo(layerNum),.neuronNo(0),.dataWidth(dataWidth),.sigmoidSize(sigmoidSize),.weightIntWidth(weightIntWidth),.actType(actType),.weightFile("w_1_0.mif"),.biasFile("b_1_0.mif"))n_0(
         .clk(clk),
@@ -24,7 +25,7 @@ neuron #(.numWeight(numWeight),.layerNo(layerNum),.neuronNo(0),.dataWidth(dataWi
         .config_layer_num(config_layer_num),
         .config_neuron_num(config_neuron_num),
         .myinputValid(x_valid),
-        .out(x_out[0*dataWidth+:dataWidth]),
+        .out(x_out[0*dataWidth+:dataWidth]), //assigning parts of x_out
         .outvalid(o_valid[0])
         );
 neuron #(.numWeight(numWeight),.layerNo(layerNum),.neuronNo(1),.dataWidth(dataWidth),.sigmoidSize(sigmoidSize),.weightIntWidth(weightIntWidth),.actType(actType),.weightFile("w_1_1.mif"),.biasFile("b_1_1.mif"))n_1(

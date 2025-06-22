@@ -28,14 +28,14 @@ module zyNet #(
     //Clock and Reset
     input                                   s_axi_aclk,
     input                                   s_axi_aresetn,
-    //AXI Stream interface
+    //AXI Stream interface - for how the first layer gets its input
     input [`dataWidth-1:0]                  axis_in_data,
     input                                   axis_in_data_valid,
     output                                  axis_in_data_ready,
 );
 
 
-assign axis_in_data_ready = 1'b1;
+assign axis_in_data_ready = 1'b1; //its always ready
 
 wire reset;
 
@@ -45,7 +45,7 @@ localparam IDLE = 'd0,
            SEND = 'd1;
 wire [`numNeuronLayer1-1:0] o1_valid;
 wire [`numNeuronLayer1*`dataWidth-1:0] x1_out;
-reg [`numNeuronLayer1*`dataWidth-1:0] holdData_1;
+reg [`numNeuronLayer1*`dataWidth-1:0] holdData_1; //to store layer1 output data when all data
 reg [`dataWidth-1:0] out_data_1;
 reg data_out_valid_1;
 
@@ -61,13 +61,17 @@ Layer_1 #(.NN(`numNeuronLayer1),.numWeight(`numWeightLayer1),.dataWidth(`dataWid
 	.x_valid(axis_in_data_valid),
 	.x_in(axis_in_data),
 	.o_valid(o1_valid),
-	.x_out(x1_out)
+	.x_out(x1_out) //all the outputs from all the neurons in layer1 - this is going to a memory - holdData_1
 );
 
 //State machine for data pipelining
+//1.wait for the full output of a layer 1
+//2.capture the output x1_out into a local register holdData_1
+//3.serialize the parallel outputs into one by one outputs out_data_1
+//4.validate when serilized data is available for the next layer data_out_valid_1
 
 reg       state_1;
-integer   count_1;
+integer   count_1; //counts how many outputs have been sent
 always @(posedge s_axi_aclk)
 begin
     if(reset)
@@ -82,18 +86,18 @@ begin
             IDLE: begin
                 count_1 <= 0;
                 data_out_valid_1 <=0;
-                if (o1_valid[0] == 1'b1)
+                if (o1_valid[0] == 1'b1)//check if layer1 outputs are valid
                 begin
-                    holdData_1 <= x1_out;
-                    state_1 <= SEND;
+                    holdData_1 <= x1_out;//capture full layer output
+                    state_1 <= SEND;//go to sending state (next cycle)
                 end
             end
             SEND: begin
-                out_data_1 <= holdData_1[`dataWidth-1:0];
-                holdData_1 <= holdData_1>>`dataWidth;
+                out_data_1 <= holdData_1[`dataWidth-1:0]; //send 1 neuron output (lowest datawidth bits)
+                holdData_1 <= holdData_1>>`dataWidth;//shift right to get the next neuron output for the next clock
                 count_1 <= count_1 +1;
                 data_out_valid_1 <= 1;
-                if (count_1 == `numNeuronLayer1)
+                if (count_1 == `numNeuronLayer1)//when all neurons have been sent, go back to idle
                 begin
                     state_1 <= IDLE;
                     data_out_valid_1 <= 0;
@@ -103,6 +107,7 @@ begin
     end
 end
 
+//same fsm is repeated for each layer 
 wire [`numNeuronLayer2-1:0] o2_valid;
 wire [`numNeuronLayer2*`dataWidth-1:0] x2_out;
 reg [`numNeuronLayer2*`dataWidth-1:0] holdData_2;
@@ -269,7 +274,7 @@ begin
                 end
             end
             SEND: begin
-                out_data_4 <= holdData_4[`dataWidth-1:0];
+                out_data_4 <= holdData_4[`dataWidth-1:0]; //finally data is going to out_data_4
                 holdData_4 <= holdData_4>>`dataWidth;
                 count_4 <= count_4 +1;
                 data_out_valid_4 <= 1;

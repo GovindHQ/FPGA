@@ -28,11 +28,23 @@ module zyNet #(
     //Clock and Reset
     input                                   s_axi_aclk,
     input                                   s_axi_aresetn,
-    //AXI Stream interface
+    //AXI Stream interface(data in)
+	//feeds input data to your neural network one element at a time 
+	//axis_in_data: the data itself (dataWidth wide)
+	//axis_in_data_valid: valid signal for zyNet
+	//axis_in_data_ready :tells the source that zynet is ready
     input [`dataWidth-1:0]                  axis_in_data,
     input                                   axis_in_data_valid,
     output                                  axis_in_data_ready,
     //AXI Lite Interface
+	//these signals allow a cpu(typically an arm core in zynq) to control the zynet IP via memory mapped registers
+	//standard AXI4-lite slave interface and allows you too 
+	//write weights/biases into internal memory 
+	//configure layer number / neuron number 
+	//read status/output from the network
+	//perform soft reset via a register write 
+	
+	//these signals are internally connected to your AXI block in axi_lite_wrapper
     input wire [C_S_AXI_ADDR_WIDTH-1 : 0]   s_axi_awaddr,
     input wire [2 : 0]                      s_axi_awprot,
     input wire                              s_axi_awvalid,
@@ -319,7 +331,8 @@ Layer_4 #(.NN(`numNeuronLayer4),.numWeight(`numWeightLayer4),.dataWidth(`dataWid
 );
 
 //State machine for data pipelining
-
+//this last state machine is not doing much - dummy code
+//x4_out is actually going to the maxFinder module
 reg       state_4;
 integer   count_4;
 always @(posedge s_axi_aclk)
@@ -338,7 +351,7 @@ begin
                 data_out_valid_4 <=0;
                 if (o4_valid[0] == 1'b1)
                 begin
-                    holdData_4 <= x4_out;
+                    holdData_4 <= x4_out; 
                     state_4 <= SEND;
                 end
             end
