@@ -45,6 +45,8 @@ module zyNet #(
 	//perform soft reset via a register write 
 	
 	//these signals are internally connected to your AXI block in axi_lite_wrapper
+	//which then exposes the internal signals like config_layer_num and config_neuron_num etc
+	
     input wire [C_S_AXI_ADDR_WIDTH-1 : 0]   s_axi_awaddr,
     input wire [2 : 0]                      s_axi_awprot,
     input wire                              s_axi_awvalid,
@@ -65,6 +67,8 @@ module zyNet #(
     output wire                             s_axi_rvalid,
     input wire                              s_axi_rready,
     //Interrupt interface
+	//output interface, the intr signal is asserted when the network computation is complete 
+	//this can trigger an interrupt on the arm processor 
     output wire                             intr
 );
 
