@@ -1,6 +1,25 @@
 
 `timescale 1 ns / 1 ps
 
+//AXI4-Lite protocol
+//it contains 8 32bit memory mapped registers accessed via AXI
+/*
+Registers are addressed based on the AXI address. 
+Using axi_awaddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] 
+(i.e., 3-bit register index):
+| Address (Offset) | Register      | Read/Write | Description                             |
+| ---------------- | ------------- | ---------- | --------------------------------------- |
+| 0x00             | `weightReg`   | W          | Write weight value (32-bit)             |
+| 0x04             | `biasReg`     | W          | Write bias value                        |
+| 0x08             | `outputReg`   | R          | Final output from the neuron            |
+| 0x0C             | `layerReg`    | W          | Specify the layer number of this neuron |
+| 0x10             | `neuronReg`   | W          | Specify the neuron ID                   |
+| 0x14             | `axi_rd_data` | R          | Data from external source (AXI read)    |
+| 0x18             | `statReg`     | R          | Status register (set when output valid) |
+| 0x1C             | `controlReg`  | W/R        | Control bits (e.g., soft reset = bit 0) |
+
+*/
+
 	module axi_lite_wrapper #
 	(
 		// Users to add parameters here
@@ -80,13 +99,15 @@
     		// accept the read data and response information.
 		input wire  S_AXI_RREADY,
         ////////////////////////////////////////////////////////
+		//Neural net control
+		
         output wire     [31:0]  layerNumber,
         output wire     [31:0]  neuronNumber,
         output reg              weightValid,
         output reg              biasValid,
         output          [31:0]  weightValue,
         output          [31:0]  biasValue,
-        input           [31:0]  nnOut,
+        input           [31:0]  nnOut, //fnal result
         input                   nnOut_valid,
         output reg              axi_rd_en,
         input           [31:0]  axi_rd_data,
@@ -389,7 +410,7 @@
 	      case ( axi_araddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] )
 	        3'h0   : reg_data_out <= weightReg;
 	        3'h1   : reg_data_out <= biasReg;
-	        3'h2   : reg_data_out <= outputReg;
+	        3'h2   : reg_data_out <= outputReg;//final output digit will be stored here
 	        3'h3   : reg_data_out <= layerReg;
 	        3'h4   : reg_data_out <= neuronReg;
 	        3'h5   : reg_data_out <= axi_rd_data;

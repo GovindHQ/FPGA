@@ -20,7 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 `include "include.v"
 
-module zyNet #(
+module zyNet #( //neural network for zynq but you can implement it in any fpga becayse we havent used any IP cores
     parameter integer C_S_AXI_DATA_WIDTH    = 32,
     parameter integer C_S_AXI_ADDR_WIDTH    = 5
 )
@@ -68,7 +68,7 @@ module zyNet #(
     input wire                              s_axi_rready,
     //Interrupt interface
 	//output interface, the intr signal is asserted when the network computation is complete 
-	//this can trigger an interrupt on the arm processor 
+	//this can trigger an interrupt on the arm processor for when the NN completes a classification
     output wire                             intr
 );
 
@@ -85,7 +85,7 @@ wire axi_rd_en;
 wire [31:0] axi_rd_data;
 wire softReset;
 
-assign intr = out_valid;
+assign intr = out_valid; //out_valid is coming from maxFinder - check initiation below.
 assign axis_in_data_ready = 1'b1;
 
 
