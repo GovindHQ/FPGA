@@ -35,19 +35,20 @@ module Weight_Memory #(parameter numWeight = 3, neuronNo=5,layerNo=1,addressWidt
     `ifdef pretrained
         initial
 		begin
-	        $readmemb(weightFile, mem);
+	        $readmemb(weightFile, mem); //if already pretrained it will be loaded from a file. pretrained work is from include.v 
 	    end
 	`else
-		always @(posedge clk)
+		always @(posedge clk) // here its sequential circuit, if i use combinational then vivado wont use blockram. 1 clock read latency is there. in combination it will use distributed ram
+		
 		begin
 			if (wen)
 			begin
-				mem[wadd] <= win;
+				mem[wadd] <= win; // or else load from win to memory
 			end
 		end 
     `endif
     
-    always @(posedge clk)
+    always @(posedge clk)//sequential - one clock read latency - therefore it will use block ram. if we use comb then vivado will use distributed ram
     begin
         if (ren)
         begin
