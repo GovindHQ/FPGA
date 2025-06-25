@@ -31,3 +31,10 @@ mnist data set 28x28 input pixels. each pixel is greyscale so it ranges from 0 t
 
 added top_sim.v testbench. reads one particular test image and injects it into the neural network. through our axi stream interface. 
 
+all 10k images in 10k txt files, 784 values of pixel in 16 bit binary values. 785th line is the binary representation of the digit in the file for verification comparison. 
+testbench will take one image from here and inject it, wait for the interrupt from the neural network, check the output and if it matches. accuracy calculation is also there. maxtestsamples is defined as 100 in the top of the testbench module. 
+the readmb expected a string literal. so im changing it to system verilog. and doing some changes for dynamic string allocation. 
+
+i kept getting errors that the files couldnt be found. i had some bugs fixed with the string format in the top_sim module and moved all mifs and txt files into top_sim_behav directory.
+
+the files configured perfectly. all 100 files were injected and we got a 91 percent accurate prediction.
